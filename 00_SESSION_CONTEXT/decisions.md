@@ -34,7 +34,7 @@ Phase 2 (Walk): Seam + Stripe (write, host-approved).
 - **PMS (Phase 2+):** OwnerRez as candidate — verify API access + cost before building.
 
 ## Open gaps (from workbook) to track
-1. No properties in Hospitable yet (user is registering now)
+1. No properties in Hospitable yet (**account created** — sandbox property + reservations still to confirm)
 2. No real-time events → Hermes cron polling until webhooks
 3. No per-action approval flow wired to Hermes
 4. Property Manager not connected to Hospitable
@@ -49,7 +49,13 @@ Phase 2 (Walk): Seam + Stripe (write, host-approved).
 13. Remaining agents not created → Field Ops, Trust & Safety, Finance & Compliance, Growth, Knowledge Steward, Chief of Staff
 
 ## Next session starting point
-1. Confirm Hospitable sandbox property + reservations exist.
+1. Confirm Hospitable sandbox property + reservations exist (account now created).
 2. Confirm OAuth + MCP connection from a Hermes profile works.
 3. Pick WF-031 (guest messaging draft) as first buildable workflow.
 4. Spec poe-plugin-twilio or poe-plugin-whatsapp first.
+
+## Pipeline status
+- GitHub repo: https://github.com/kmishra1204/poe-str-system (public, main)
+- CI: lint → test → build (ruff, mypy, eslint, tsc, pytest, jest, bandit, docker build)
+- PR template + CODEOWNERS configured
+- Base code stubs: app/core/config.py, app/db/base.py, app/schemas/base.py

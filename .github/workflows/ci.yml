@@ -63,6 +63,12 @@ jobs:
       - name: Typecheck frontend
         run: cd 07_CODE/frontend && npm run typecheck
 
+      - name: Security scan backend (bandit)
+        run: |
+          pip install bandit
+          cd 07_CODE/backend && bandit -r app -ll -f txt -o bandit-report.txt || true
+          cat bandit-report.txt 2>/dev/null || true
+
   test:
     needs: lint
     runs-on: ubuntu-latest

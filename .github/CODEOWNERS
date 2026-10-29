@@ -1,0 +1,20 @@
+# CODEOWNERS
+
+# Project owner
+*       @kmishra1204
+
+# Backend
+/07_CODE/backend/   @kmishra1204
+
+# Frontend
+/07_CODE/frontend/  @kmishra1204
+
+# Infrastructure
+/docker-compose.yml     @kmishra1204
+/Makefile               @kmishra1204
+/.github/workflows/     @kmishra1204
+
+# Documentation
+/00_SESSION_CONTEXT/    @kmishra1204
+/02_PLANNING/           @kmishra1204
+/03_ARCHITECTURE/       @kmishra1204
