@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: poe_str
+          POSTGRES_USER: poe
+          POSTGRES_PASSWORD: poe_dev_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U poe -d poe_str"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install backend dependencies
+        run: |
+          pip install ruff mypy
+          cd 07_CODE/backend && pip install -e ".[dev,test]"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install frontend dependencies
+        run: cd 07_CODE/frontend && npm ci
+
+      - name: Lint backend (ruff)
+        run: cd 07_CODE/backend && ruff check app tests
+
+      - name: Format check backend (ruff format --check)
+        run: cd 07_CODE/backend && ruff format --check app tests
+
+      - name: Typecheck backend (mypy)
+        run: cd 07_CODE/backend && mypy app
+
+      - name: Lint frontend
+        run: cd 07_CODE/frontend && npm run lint
+
+      - name: Typecheck frontend
+        run: cd 07_CODE/frontend && npm run typecheck
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: poe_str
+          POSTGRES_USER: poe
+          POSTGRES_PASSWORD: poe_dev_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U poe -d poe_str"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      nats:
+        image: nats:2.10-alpine
+        ports: ["4222:4222"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install backend dependencies
+        run: |
+          cd 07_CODE/backend && pip install -e ".[dev,test]"
+
+      - name: Run backend tests
+        run: cd 07_CODE/backend && pytest tests/unit -v --tb=short
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install frontend dependencies
+        run: cd 07_CODE/frontend && npm ci
+
+      - name: Run frontend tests
+        run: cd 07_CODE/frontend && npm run test:unit
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: 07_CODE/backend/Dockerfile
+          target: production
+          tags: poe-str-backend:latest
+          load: false
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: 07_CODE/frontend/Dockerfile
+          target: production
+          tags: poe-str-frontend:latest
+          load: false
